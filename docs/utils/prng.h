@@ -133,4 +133,12 @@ signed char RandomS8()
     return (signed char)RandomInt(-127, 127);
 }
 
+void Randomize(float* array, size_t n, float a, float b)
+{
+    for (size_t i = 0; i < n; i++)
+    {
+        array[i] = RandomFloat(a, b);
+    }
+}
+
 #endif
