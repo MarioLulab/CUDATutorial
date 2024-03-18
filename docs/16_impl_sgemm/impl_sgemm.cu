@@ -7,6 +7,7 @@
 
 #include "impl_sgemm.h"
 #include "naive_sgemm.h"
+#include "sm_sgemm.h"
 
 
 #define ALIGN_UP(x, div) (unsigned int)((x + div - 1) / div)
@@ -47,6 +48,14 @@ inline void call_naive_sgemm(const float* A, const float* B, float* out, int M, 
     naive_sgemm<<<gridDim, blockDim>>>(A, B, out, M, N, K);    
 }
 
+inline void call_sgemm_1dtile_thread(float* A, float* B, float* out, int M, int N, int K){
+    dim3 gridDim(ALIGN_UP(N, kBDIMX), ALIGN_UP(M, kBDIMY), 1);
+    dim3 blockDim(kBDIMX * kBDIMY / VPT);
+
+    sgemm_1dtile_thread<<<gridDim, blockDim>>>(A, B, out, M, N, K);    
+    // sgemm_blocktiling_1d_kernel<kbM, kbN, kbK, krM><<<gridDim, blockDim>>>(A, B, out, M, N, K);
+}
+
 void sgemm_CPU(const float* A, const float* B, float* out, int M, int N, int K){
     for (int i = 0; i < M; ++i) {
         for (int j = 0; j < N; ++j) {
@@ -61,7 +70,7 @@ void sgemm_CPU(const float* A, const float* B, float* out, int M, int N, int K){
 
 
 int main(int argc, char** argv) {
-    initDevice(6);
+    initDevice(0);
 
     int kernel_type = 0;
     if(argc==2) {
@@ -105,6 +114,12 @@ int main(int argc, char** argv) {
         {   \
             call_naive_sgemm(d_inA, d_inB, d_out, kM, kN, kK);   \
             std::cout << "====== call_naive_sgemm finished ======" << std::endl; \
+            break;  \
+        }   \
+        case 1: \
+        {   \
+            call_sgemm_1dtile_thread(d_inA, d_inB, d_out, kM, kN, kK);   \
+            std::cout << "====== call_sgemm_1dtile_thread finished ======" << std::endl; \
             break;  \
         }   \
         default:    \
