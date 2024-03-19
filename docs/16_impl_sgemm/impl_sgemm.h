@@ -1,17 +1,17 @@
 #pragma once
 #include <math_constants.h>
+#include <cassert>
 
 constexpr unsigned int kM = 1024;
 constexpr unsigned int kN = 1024;
 constexpr unsigned int kK = 512;
-constexpr unsigned int kBDIMX = 32;
-constexpr unsigned int kBDIMY = 32;
+constexpr unsigned int kBDIMX = 64;
+constexpr unsigned int kBDIMY = 64;
 constexpr unsigned int kbM = kBDIMY;
 constexpr unsigned int kbN = kBDIMX;
 constexpr unsigned int kbK = 8;
-constexpr unsigned int VPT = kbK;
-constexpr unsigned int krM = 4;
-constexpr unsigned int krN = 4;
+constexpr unsigned int krM = 8;
+constexpr unsigned int krN = 8;
 
 #define HOSTDEVICE __host__ __device__
 

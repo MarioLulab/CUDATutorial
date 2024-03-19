@@ -50,10 +50,19 @@ inline void call_naive_sgemm(const float* A, const float* B, float* out, int M, 
 
 inline void call_sgemm_1dtile_thread(float* A, float* B, float* out, int M, int N, int K){
     dim3 gridDim(ALIGN_UP(N, kBDIMX), ALIGN_UP(M, kBDIMY), 1);
-    dim3 blockDim(kBDIMX * kBDIMY / VPT);
+    dim3 blockDim(kBDIMX * kBDIMY / krM);
 
     sgemm_1dtile_thread<<<gridDim, blockDim>>>(A, B, out, M, N, K);    
-    // sgemm_blocktiling_1d_kernel<kbM, kbN, kbK, krM><<<gridDim, blockDim>>>(A, B, out, M, N, K);
+}
+
+inline void call_sgemm_2dtile_thread(float* A, float* B, float* out, int M, int N, int K){
+    dim3 gridDim(ALIGN_UP(N, kBDIMX), ALIGN_UP(M, kBDIMY), 1);
+    dim3 blockDim(kBDIMX * kBDIMY / (krM * krN));
+
+    sgemm_2dtile_thread<<<gridDim, blockDim>>>(A, B, out, M, N, K);  
+    // sgemm_blocktiling_2d_kernel<kBDIMY, kBDIMX, kbK, krM, krN><<<gridDim, blockDim>>>(
+    //     A, B, out, M, N, K
+    // );
 }
 
 void sgemm_CPU(const float* A, const float* B, float* out, int M, int N, int K){
@@ -70,7 +79,7 @@ void sgemm_CPU(const float* A, const float* B, float* out, int M, int N, int K){
 
 
 int main(int argc, char** argv) {
-    initDevice(0);
+    initDevice(6);
 
     int kernel_type = 0;
     if(argc==2) {
@@ -120,6 +129,12 @@ int main(int argc, char** argv) {
         {   \
             call_sgemm_1dtile_thread(d_inA, d_inB, d_out, kM, kN, kK);   \
             std::cout << "====== call_sgemm_1dtile_thread finished ======" << std::endl; \
+            break;  \
+        }   \
+        case 2: \
+        {   \
+            call_sgemm_2dtile_thread(d_inA, d_inB, d_out, kM, kN, kK);   \
+            std::cout << "====== call_sgemm_2dtile_thread finished ======" << std::endl; \
             break;  \
         }   \
         default:    \
