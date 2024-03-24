@@ -65,6 +65,20 @@ inline void call_sgemm_2dtile_thread(float* A, float* B, float* out, int M, int 
     // );
 }
 
+inline void call_sgemm_2dtile_thread_with_vec(float* A, float* B, float* out, int M, int N, int K){
+    dim3 gridDim(ALIGN_UP(N, kBDIMX), ALIGN_UP(M, kBDIMY), 1);
+    dim3 blockDim(kBDIMX * kBDIMY / (krM * krN));
+
+    sgemm_2dtile_thread_with_vec<<<gridDim, blockDim>>>(A, B, out, M, N, K);  
+}
+
+inline void call_sgemm_2dtile_thread_with_vec_and_db(float* A, float* B, float* out, int M, int N, int K){
+    dim3 gridDim(ALIGN_UP(N, kBDIMX), ALIGN_UP(M, kBDIMY), 1);
+    dim3 blockDim(kBDIMX * kBDIMY / (krM * krN));
+
+    sgemm_2dtile_thread_with_vec_and_db<<<gridDim, blockDim>>>(A, B, out, M, N, K);  
+}
+
 void sgemm_CPU(const float* A, const float* B, float* out, int M, int N, int K){
     for (int i = 0; i < M; ++i) {
         for (int j = 0; j < N; ++j) {
@@ -79,7 +93,7 @@ void sgemm_CPU(const float* A, const float* B, float* out, int M, int N, int K){
 
 
 int main(int argc, char** argv) {
-    initDevice(6);
+    initDevice(1);
 
     int kernel_type = 0;
     if(argc==2) {
@@ -135,6 +149,18 @@ int main(int argc, char** argv) {
         {   \
             call_sgemm_2dtile_thread(d_inA, d_inB, d_out, kM, kN, kK);   \
             std::cout << "====== call_sgemm_2dtile_thread finished ======" << std::endl; \
+            break;  \
+        }   \
+        case 3: \
+        {   \
+            call_sgemm_2dtile_thread_with_vec(d_inA, d_inB, d_out, kM, kN, kK);   \
+            std::cout << "====== call_sgemm_2dtile_thread_with_vec finished ======" << std::endl; \
+            break;  \
+        }   \
+        case 4: \
+        {   \
+            call_sgemm_2dtile_thread_with_vec_and_db(d_inA, d_inB, d_out, kM, kN, kK);   \
+            std::cout << "====== call_sgemm_2dtile_thread_with_vec_and_db finished ======" << std::endl; \
             break;  \
         }   \
         default:    \
