@@ -41,3 +41,27 @@ def mult_qkv_rotate_half(value, cos_tensor, sin_tensor):
     
     qkv = value * cos_tensor + rotate_half_qkv * sin_tensor
     return qkv
+
+def rotate_half(value):
+    b, s, n, head_dim = value.shape
+    
+    return paddle.concat(
+        (
+            - value[..., head_dim / 2:],
+            value[..., :head_dim / 2]
+        ),
+        axis = -1
+    )
+    
+def get_cos_sin(value):
+    b, s, n, head_dim = value.shape
+    
+    inv_freq = 1.0 / (10000 ** (paddle.arange(0, head_dim, 2).astype(paddle.float32) / head_dim))
+    t = paddle.arange(0, s).astype(paddle.float32)
+    freq = paddle.einsum("i,j->ij", t, inv_freq)
+    freq = paddle.concat((freq, freq), axis=-1)
+    return freq.cos(), freq.sin()
+
+def rope(value):
+    cos, sin = get_cos_sin(value)
+    return value * cos + rorate_half(value) * sin
